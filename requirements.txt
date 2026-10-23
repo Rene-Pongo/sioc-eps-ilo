@@ -1,0 +1,19 @@
+# SIOC EPS Ilo S.A. - Dependencias del monorepo
+# Python 3.11+
+
+# Analisis y manipulacion de datos
+pandas>=2.2.0
+numpy>=1.26.0
+
+# Deteccion de anomalias (Fase 2)
+scikit-learn>=1.4.0
+
+# Visualizacion y dashboard (Fases 3 y 4)
+plotly>=5.20.0
+streamlit>=1.33.0
+
+# Reportes ejecutivos Word (Fase 3)
+python-docx>=1.1.0
+
+# Pruebas unitarias (Fase 5)
+pytest>=8.0.0
