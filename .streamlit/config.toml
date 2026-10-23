@@ -1,0 +1,12 @@
+# Tema oscuro base del dashboard SIOC (Glassmorphism de 3 capas).
+# La capa 1 (imagen HD aleatoria) y la capa 2 (scrim) se inyectan desde
+# src/ui_glassmorphism.py; este tema asegura que los widgets nativos de
+# Streamlit (tablas, menus, tooltips) acompanen la paleta obsidiana.
+
+[theme]
+base = "dark"
+primaryColor = "#38BDF8"
+backgroundColor = "#071120"
+secondaryBackgroundColor = "#0F172A"
+textColor = "#F8FAFC"
+font = "sans serif"
