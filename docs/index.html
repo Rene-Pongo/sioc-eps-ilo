@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Portal ejecutivo del SIOC de EPS Ilo S.A.: control de Agua No Facturada, telemetría de los sectores Pampa Inalámbrica, Cercado de Ilo y Pacocha / Ciudad Nueva, mapa interactivo y simulador de ROI.">
+    <meta name="theme-color" content="#071120">
+    <meta name="author" content="Rene-Pongo">
+    <title>SIOC EPS Ilo | Portal Ejecutivo de Agua No Facturada</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://images.unsplash.com">
+    <link rel="preconnect" href="https://unpkg.com">
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link rel="preconnect" href="https://server.arcgisonline.com">
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <!-- Leaflet 1.9.4 -->
+    <link rel="stylesheet"
+          href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+          crossorigin="">
+
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <a class="skip-link" href="#contenido">Saltar al contenido principal</a>
+
+    <!-- CAPA 1: fondo fotográfico dinámico (8 imágenes HD, cambio aleatorio) -->
+    <div id="bg-layers" aria-hidden="true">
+        <div class="bg-image" id="bg-a"></div>
+        <div class="bg-image" id="bg-b"></div>
+    </div>
+
+    <!-- CAPA 2: velo atmosférico normalizador / scrim global -->
+    <div id="bg-scrim" aria-hidden="true"></div>
+
+    <!-- CAPA 3: ventanas y tarjetas Smart Frosted Glass -->
+    <header class="site-header">
+        <div class="site-header__inner">
+            <a class="brand" href="#contenido" aria-label="SIOC EPS Ilo, ir al inicio">
+                <span class="brand__mark" aria-hidden="true">
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <path d="M12 2.8c-.3 0-.6.2-.8.5C8.9 6.5 5 11.2 5 15.1a7 7 0 0 0 14 0c0-3.9-3.9-8.6-6.2-11.8-.2-.3-.5-.5-.8-.5z"
+                              fill="currentColor" stroke="none"></path>
+                    </svg>
+                </span>
+                <span>
+                    <span class="brand__title">SIOC · EPS Ilo S.A.</span>
+                    <span class="brand__sub">Control de Agua No Facturada</span>
+                </span>
+            </a>
+
+            <nav class="site-nav" aria-label="Secciones del portal">
+                <a href="#resumen">Resumen</a>
+                <a href="#operacion">Operación</a>
+                <a href="#mapa">Mapa de Ilo</a>
+                <a href="#simulador">Simulador ROI</a>
+                <a href="#alertas">Alertas IA</a>
+            </nav>
+
+            <div class="header-actions">
+                <span class="bg-badge" id="bg-indicator" aria-live="polite">Ambiente visual 1/8</span>
+                <button class="btn" id="bg-button" type="button"
+                        aria-label="Cambiar el fondo aleatorio del portal">
+                    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M12 3a9 9 0 1 0 .3 18h1.2a2.5 2.5 0 0 0 0-5h-1.2a1.9 1.9 0 0 1 0-3.8h4.2A4.6 4.6 0 0 0 21 7.6C20.4 4.9 16.6 3 12 3z"></path>
+                        <circle cx="7.6" cy="10.4" r="0.9"></circle>
+                        <circle cx="9.8" cy="6.8" r="0.9"></circle>
+                        <circle cx="14.2" cy="6.8" r="0.9"></circle>
+                    </svg>
+                    Cambiar Escenario Visual
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="container" id="contenido">
+        <noscript>
+            <p class="noscript">
+                <strong>JavaScript está desactivado.</strong> El portal necesita JavaScript
+                para mostrar los gráficos, el mapa interactivo y la calculadora de ROI.
+                Los parámetros normativos y el contexto de los sectores siguen disponibles
+                en el texto de esta página.
+            </p>
+        </noscript>
+
+        <!-- ===================== HERO ===================== -->
+        <section class="glass hero" aria-labelledby="hero-title">
+            <span class="eyebrow">EPS Ilo S.A. · Moquegua · Perú</span>
+            <h1 id="hero-title">Portal Ejecutivo de Agua No Facturada</h1>
+            <p class="hero__lead">
+                Telemetría hidráulica, detección de fugas y fraude con IA, valorización
+                económica SUNASS y simulación de inversiones para Pampa Inalámbrica,
+                Cercado de Ilo y Pacocha / Ciudad Nueva. Una lectura ejecutiva del
+                desempeño operativo y comercial de la EPS.
+            </p>
+
+            <div class="chip-row" aria-label="Indicadores clave del periodo">
+                <span class="chip" id="chip-period">
+                    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                        <rect x="3" y="5" width="18" height="16" rx="2"></rect>
+                        <path d="M3 10h18M8 3v4M16 3v4"></path>
+                    </svg>
+                    <span class="chip__text">Periodo 23/09/2026 — 22/10/2026</span>
+                </span>
+                <span class="chip" id="chip-records">
+                    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M9 3h6M10 3v6l-5.4 9.4A2 2 0 0 0 6.3 21h11.4a2 2 0 0 0 1.7-2.6L14 9V3"></path>
+                    </svg>
+                    <span class="chip__text">2 160 registros horarios</span>
+                </span>
+                <span class="chip">
+                    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M3 21h18M6 21V9l6-3v15M12 21V11l6 2v8"></path>
+                        <path d="M9 11h.01M9 15h.01M15 16h.01M15 19h.01"></path>
+                    </svg>
+                    <span class="chip__text">3 sectores hidráulicos</span>
+                </span>
+                <span class="chip is-warn" id="chip-anf">
+                    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M12 3.5c-.3 0-.6.2-.8.5C9.2 7 5.5 11.4 5.5 15a6.5 6.5 0 0 0 13 0c0-3.6-3.7-8-5.7-11-.2-.3-.5-.5-.8-.5z"></path>
+                    </svg>
+                    <span class="chip__text">ANF 30.7%</span>
+                </span>
+                <span class="chip is-warn" id="chip-sunass">
+                    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M12 4v17M7 21h10M5 7h14M5 7l-2.5 5h5L5 7zM19 7l-2.5 5h5L19 7z"></path>
+                    </svg>
+                    <span class="chip__text">SUNASS AMARILLO</span>
+                </span>
+            </div>
+        </section>
+
+        <!-- ===================== KPIs ===================== -->
+        <section id="resumen" aria-labelledby="resumen-title">
+            <div class="glass section-head">
+                <div>
+                    <span class="section-head__kicker">Tablero ejecutivo</span>
+                    <h2 id="resumen-title">Indicadores del periodo analizado</h2>
+                    <p>
+                        Ventana de 30 días generada con el motor de telemetría del monorepo
+                        (semilla 42, 3 sectores, resolución horaria). La valorización usa la
+                        tarifa media ponderada SUNASS de S/ 3.85 por m³.
+                    </p>
+                </div>
+                <span class="section-head__meta" id="kpi-period-meta">30 días · 2 160 registros</span>
+            </div>
+
+            <div class="kpi-grid" id="kpi-grid" aria-live="polite"></div>
+        </section>
+
+        <!-- ===================== OPERACIÓN ===================== -->
+        <section id="operacion" aria-labelledby="operacion-title">
+            <div class="glass section-head">
+                <div>
+                    <span class="section-head__kicker">Operación hidráulica</span>
+                    <h2 id="operacion-title">ANF, balance hídrico y calidad del agua</h2>
+                    <p>
+                        Las curvas diarias de ANF se comparan contra las metas SUNASS:
+                        <strong>28% (alerta amarilla)</strong> y
+                        <strong>35% (alerta crítica)</strong>. La calidad se evalúa con el
+                        mínimo DIGESA de 0.5 mg/L de cloro residual libre en cualquier punto
+                        de la red.
+                    </p>
+                </div>
+                <span class="section-head__meta">Chart.js · fondo transparente</span>
+            </div>
+
+            <div class="chart-grid">
+                <article class="glass chart-card chart-card--wide">
+                    <div class="chart-card__head">
+                        <div>
+                            <h3>Evolución diaria del ANF por sector</h3>
+                            <p class="chart-card__hint">
+                                Promedio diario del Agua No Facturada sobre el volumen producido.
+                            </p>
+                        </div>
+                        <span class="chart-card__legend">% ANF · línea punteada = umbral SUNASS</span>
+                    </div>
+                    <div class="chart-wrap chart-wrap--tall">
+                        <canvas id="chart-anf" role="img"
+                                aria-label="Gráfico de líneas con la evolución diaria del ANF de los tres sectores y los umbrales SUNASS de 28 y 35 por ciento"></canvas>
+                    </div>
+                </article>
+
+                <article class="glass chart-card">
+                    <div class="chart-card__head">
+                        <div>
+                            <h3>Balance hídrico por sector</h3>
+                            <p class="chart-card__hint">Volumen producido frente al facturado (m³).</p>
+                        </div>
+                    </div>
+                    <div class="chart-wrap">
+                        <canvas id="chart-balance" role="img"
+                                aria-label="Gráfico de barras agrupadas con el volumen producido y facturado de cada sector"></canvas>
+                    </div>
+                </article>
+
+                <article class="glass chart-card">
+                    <div class="chart-card__head">
+                        <div>
+                            <h3>Cloro residual promedio</h3>
+                            <p class="chart-card__hint">
+                                Horas con servicio activo frente al mínimo DIGESA de 0.5 mg/L.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="chart-wrap">
+                        <canvas id="chart-chlorine" role="img"
+                                aria-label="Gráfico de barras con el cloro residual promedio por sector y la línea del mínimo DIGESA de 0.5 miligramos por litro"></canvas>
+                    </div>
+                </article>
+            </div>
+
+            <div class="glass table-card">
+                <div class="table-card__head">
+                    <h3>Balance y valorización por sector</h3>
+                    <span class="section-head__meta">Tarifa media S/ 3.85 / m³</span>
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <caption>
+                            Volúmenes del periodo de 30 días y semáforo normativo SUNASS por
+                            sector hidráulico.
+                        </caption>
+                        <thead>
+                            <tr>
+                                <th scope="col">Sector</th>
+                                <th scope="col" class="num">Producido (m³)</th>
+                                <th scope="col" class="num">Facturado (m³)</th>
+                                <th scope="col" class="num">ANF (m³)</th>
+                                <th scope="col" class="num">ANF %</th>
+                                <th scope="col" class="num">Pérdida física</th>
+                                <th scope="col" class="num">Pérdida comercial</th>
+                                <th scope="col" class="num">Pérdida económica</th>
+                                <th scope="col">Semáforo</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sector-table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===================== MAPA ===================== -->
+        <section id="mapa" aria-labelledby="mapa-title">
+            <div class="glass section-head">
+                <div>
+                    <span class="section-head__kicker">Territorio</span>
+                    <h2 id="mapa-title">Mapa operativo de los sectores de Ilo</h2>
+                    <p>
+                        Los tres sectores hidráulicos monitoreados se ubican sobre la costa
+                        de la provincia de Ilo. El color del marcador representa el ANF
+                        promedio: verde dentro de la meta, ámbar en alerta y coral en zona
+                        crítica. Toca un marcador para ver el detalle operativo.
+                    </p>
+                </div>
+                <span class="section-head__meta">Leaflet · Esri / OpenStreetMap</span>
+            </div>
+
+            <div class="glass map-card">
+                <div class="map-shell" id="map-shell">
+                    <div id="map" role="region" aria-label="Mapa interactivo de los sectores hidráulicos de Ilo"></div>
+                </div>
+            </div>
+
+            <div class="sector-grid" id="sector-grid"></div>
+        </section>
+
+        <!-- ===================== SIMULADOR ===================== -->
+        <section id="simulador" aria-labelledby="simulador-title">
+            <div class="glass section-head">
+                <div>
+                    <span class="section-head__kicker">Inversión y retorno</span>
+                    <h2 id="simulador-title">Calculadora interactiva de ROI / ANF</h2>
+                    <p>
+                        Ajusta el volumen mensual de ANF, la reducción objetivo y la inversión
+                        del plan. El modelo valoriza los metros cúbicos recuperados a la
+                        tarifa media SUNASS y descuenta el flujo a una tasa anual referencial
+                        del 12% para estimar payback, VAN a 12 meses y ROI.
+                    </p>
+                </div>
+                <span class="section-head__meta">Cálculo en vivo</span>
+            </div>
+
+            <div class="sim-grid">
+                <form class="glass sim-controls" id="roi-form" novalidate aria-labelledby="roi-controls-title">
+                    <h3 id="roi-controls-title">Parámetros del plan</h3>
+                    <p class="sim-controls__intro">
+                        Los valores iniciales corresponden al ANF del periodo y al escenario
+                        base de inversión del dashboard Streamlit.
+                    </p>
+
+                    <div class="field">
+                        <div class="field__head">
+                            <label for="roi-anf">ANF mensual actual (m³)</label>
+                        </div>
+                        <input type="number" id="roi-anf" name="roi-anf"
+                               min="1000" max="1000000" step="500" value="103532"
+                               inputmode="numeric" autocomplete="off">
+                        <p class="field__hint">
+                            Volumen no facturado equivalente a 30 días de operación.
+                        </p>
+                    </div>
+
+                    <div class="field">
+                        <div class="field__head">
+                            <label for="roi-reduction">Reducción objetivo del ANF</label>
+                            <output class="field__value" id="roi-reduction-out" for="roi-reduction">30%</output>
+                        </div>
+                        <input type="range" id="roi-reduction" name="roi-reduction"
+                               min="5" max="80" step="5" value="30"
+                               aria-describedby="roi-reduction-hint">
+                        <p class="field__hint" id="roi-reduction-hint">
+                            Porcentaje del ANF actual que el plan busca recuperar (5% a 80%).
+                        </p>
+                    </div>
+
+                    <div class="field">
+                        <div class="field__head">
+                            <label for="roi-investment">Inversión del plan (S/)</label>
+                            <output class="field__value" id="roi-investment-out" for="roi-investment">S/ 45 000</output>
+                        </div>
+                        <input type="range" id="roi-investment" name="roi-investment"
+                               min="5000" max="500000" step="5000" value="45000"
+                               aria-describedby="roi-investment-hint">
+                        <p class="field__hint" id="roi-investment-hint">
+                            Sectorización, macromedición, micromedidores y control activo de fugas.
+                        </p>
+                    </div>
+
+                    <p class="sim-note">
+                        <strong>Supuestos:</strong> tarifa media ponderada
+                        <strong>S/ 3.85 / m³</strong>, costo variable de producción
+                        <strong>S/ 1.20 / m³</strong>, tasa de descuento anual
+                        <strong>12%</strong> y horizonte de evaluación de 12 meses.
+                        Datos simulados con fines de planificación.
+                    </p>
+                </form>
+
+                <div class="sim-results">
+                    <div class="roi-grid" id="roi-grid" aria-live="polite"></div>
+
+                    <div class="verdict is-ok" id="roi-verdict" role="status" aria-live="polite">
+                        <span class="verdict__icon" aria-hidden="true">✓</span>
+                        <p id="roi-verdict-text">
+                            El plan es económicamente viable: el VAN a 12 meses es positivo y
+                            el ahorro anual supera la inversión inicial.
+                        </p>
+                    </div>
+
+                    <article class="glass chart-card">
+                        <div class="chart-card__head">
+                            <div>
+                                <h3>Ahorro acumulado a 12 meses vs. inversión</h3>
+                                <p class="chart-card__hint">
+                                    Flujo de caja mensual acumulado sin descontar, comparado con
+                                    el desembolso inicial.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="chart-wrap">
+                            <canvas id="chart-roi" role="img"
+                                    aria-label="Gráfico de líneas con el ahorro acumulado a doce meses y la inversión inicial del plan"></canvas>
+                        </div>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===================== ALERTAS ===================== -->
+        <section id="alertas" aria-labelledby="alertas-title">
+            <div class="glass section-head">
+                <div>
+                    <span class="section-head__kicker">Inteligencia operativa</span>
+                    <h2 id="alertas-title">Alertas del motor IA por sector</h2>
+                    <p>
+                        Las reglas normativas SUNASS/DIGESA se combinan con
+                        <em>Isolation Forest</em> para priorizar fugas nocturnas, fraude
+                        comercial, incumplimientos de cloro, turbiedad y presión. El score
+                        IA va de 0 a 1 y la severidad resume el riesgo operativo.
+                    </p>
+                </div>
+                <span class="section-head__meta" id="alerts-meta">144 alertas · 30 días</span>
+            </div>
+
+            <div class="chart-grid">
+                <article class="glass chart-card chart-card--wide">
+                    <div class="chart-card__head">
+                        <div>
+                            <h3>Alertas detectadas por tipo y sector</h3>
+                            <p class="chart-card__hint">
+                                Conteo de eventos anómalos clasificados por el motor IA.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="chart-wrap">
+                        <canvas id="chart-alerts" role="img"
+                                aria-label="Gráfico de barras apiladas horizontales con las alertas por tipo y sector"></canvas>
+                    </div>
+                </article>
+            </div>
+
+            <div class="glass table-card">
+                <div class="table-card__head">
+                    <h3>Alertas priorizadas por score IA</h3>
+                    <span class="section-head__meta">Top 10 del periodo</span>
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <caption>
+                            Eventos anómalos ordenados por score del modelo. La severidad
+                            resume el riesgo operativo y comercial.
+                        </caption>
+                        <thead>
+                            <tr>
+                                <th scope="col">Fecha / hora</th>
+                                <th scope="col">Sector</th>
+                                <th scope="col">Tipo de anomalía</th>
+                                <th scope="col">Severidad</th>
+                                <th scope="col" class="num">Score IA</th>
+                                <th scope="col" class="num">Caudal (L/s)</th>
+                                <th scope="col" class="num">Presión (m.c.a.)</th>
+                                <th scope="col" class="num">Cloro (mg/L)</th>
+                                <th scope="col" class="num">ANF %</th>
+                            </tr>
+                        </thead>
+                        <tbody id="alerts-table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <footer class="glass site-footer">
+            <strong>SIOC · EPS Ilo S.A.</strong> · Sistema Integrado de Operaciones,
+            Control de ANF e Inteligencia Comercial<br>
+            Motor visual <strong>Luminance-Safe Glassmorphism</strong> de 3 capas ·
+            contraste WCAG AAA sobre fondos claros y oscuros ·
+            pool de 8 imágenes HD con cambio aleatorio al recargar<br>
+            <span id="footer-updated">Datos simulados con fines de planificación · Periodo 23/09/2026 — 22/10/2026</span>
+
+            <div class="site-footer__links">
+                <a href="https://github.com/Rene-Pongo/sioc-eps-ilo" target="_blank" rel="noopener noreferrer">
+                    Repositorio GitHub
+                </a>
+                <a href="https://github.com/Rene-Pongo/sioc-eps-ilo/blob/main/PLAN_ARQUITECTURA.md" target="_blank" rel="noopener noreferrer">
+                    Arquitectura del sistema
+                </a>
+                <a href="https://www.sunass.gob.pe/" target="_blank" rel="noopener noreferrer">
+                    SUNASS
+                </a>
+            </div>
+        </footer>
+    </main>
+
+    <!-- Librerías de visualización (CDN) -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+            crossorigin=""></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <script src="app.js" defer></script>
+</body>
+</html>
